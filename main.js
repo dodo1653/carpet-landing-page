@@ -1,8 +1,10 @@
 // Lenis smooth scrolling, driven by GSAP's ticker so ScrollTrigger stays in sync
+// (native touch scrolling on phones — Lenis sync makes mobile feel rubber-bandy)
 const lenis = new Lenis({
   duration: 1.1,
   easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
   smoothWheel: true,
+  syncTouch: false,
 });
 lenis.on('scroll', ScrollTrigger.update);
 gsap.ticker.add((time) => {
@@ -14,6 +16,11 @@ window.__lenis = lenis;
 // Recalculate Lenis's scroll limit once all images/fonts have loaded
 // (it initializes while the loading screen is up, when the page is still short)
 window.addEventListener('load', () => {
+  lenis.resize();
+  if (window.ScrollTrigger) ScrollTrigger.refresh();
+});
+// Mobile: browser chrome shows/hides and orientation flips change viewport height
+window.addEventListener('orientationchange', () => {
   lenis.resize();
   if (window.ScrollTrigger) ScrollTrigger.refresh();
 });
@@ -32,80 +39,84 @@ anchors.forEach((a) => {
 
 gsap.registerPlugin(ScrollTrigger);
 
-const isSmallScreen = window.innerWidth < 1300;
+// "still aping alone?" scroll-scrubbed drift: desktop + tablet only. On phones the
+// blocks become a static stacked list (CSS), so the scroll-jack is disabled entirely.
+if (window.matchMedia('(min-width: 768px)').matches) {
+  const isSmallScreen = window.innerWidth < 1300;
 
-// Add staggered delays to each block animation
-gsap.to(".block", {
-  yPercent: isSmallScreen ? -200 : -900,
-  scrollTrigger: {
-    trigger: ".section-2",
-    start: "top bottom",
-    end: "bottom top",
-    scrub: true,
-  },
-  ease: "none",
-  delay: 0
-});
+  // Add staggered delays to each block animation
+  gsap.to(".block", {
+    yPercent: isSmallScreen ? -200 : -900,
+    scrollTrigger: {
+      trigger: ".section-2",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: true,
+    },
+    ease: "none",
+    delay: 0
+  });
 
-gsap.to(".block-2", {
-  yPercent: isSmallScreen ? -600 : -2700,
-  scrollTrigger: {
-    trigger: ".section-2",
-    start: "top bottom",
-    end: "bottom top",
-    scrub: true,
-  },
-  ease: "none",
-  delay: 0.2
-});
+  gsap.to(".block-2", {
+    yPercent: isSmallScreen ? -600 : -2700,
+    scrollTrigger: {
+      trigger: ".section-2",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: true,
+    },
+    ease: "none",
+    delay: 0.2
+  });
 
-gsap.to(".block-3", {
-  yPercent: isSmallScreen ? -500 : -2300,
-  scrollTrigger: {
-    trigger: ".section-2",
-    start: "top bottom",
-    end: "bottom top",
-    scrub: true,
-  },
-  ease: "none",
-  delay: 0.4
-});
+  gsap.to(".block-3", {
+    yPercent: isSmallScreen ? -500 : -2300,
+    scrollTrigger: {
+      trigger: ".section-2",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: true,
+    },
+    ease: "none",
+    delay: 0.4
+  });
 
-gsap.to(".block-4", {
-  yPercent: isSmallScreen ? -400 : -2000,
-  scrollTrigger: {
-    trigger: ".section-2",
-    start: "top bottom",
-    end: "bottom top",
-    scrub: true,
-  },
-  ease: "none",
-  delay: 0.6
-});
+  gsap.to(".block-4", {
+    yPercent: isSmallScreen ? -400 : -2000,
+    scrollTrigger: {
+      trigger: ".section-2",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: true,
+    },
+    ease: "none",
+    delay: 0.6
+  });
 
-gsap.to(".block-5", {
-  yPercent: isSmallScreen ? -450 : -2100,
-  scrollTrigger: {
-    trigger: ".section-2",
-    start: "top bottom",
-    end: "bottom top",
-    scrub: true,
-  },
-  ease: "none",
-  delay: 0.8
-});
+  gsap.to(".block-5", {
+    yPercent: isSmallScreen ? -450 : -2100,
+    scrollTrigger: {
+      trigger: ".section-2",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: true,
+    },
+    ease: "none",
+    delay: 0.8
+  });
 
-gsap.to(".block-6", {
-  yPercent: isSmallScreen ? -750 : -3750,
-  scrollTrigger: {
-    trigger: ".section-2",
-    start: "top bottom",
-    end: "bottom top",
-    scrub: true,
-  },
-  ease: "none",
-  delay: 1
-});
+  gsap.to(".block-6", {
+    yPercent: isSmallScreen ? -750 : -3750,
+    scrollTrigger: {
+      trigger: ".section-2",
+      start: "top bottom",
+      end: "bottom top",
+      scrub: true,
+    },
+    ease: "none",
+    delay: 1
+  });
+}
 
 // Flying carpet spiral "wandering" animation on loop (no initial jump)
 gsap.to(".image-4", {
@@ -153,8 +164,15 @@ const colSetup = (col, dir) => {
 };
 const cols = document.querySelectorAll('.features-col');
 if (cols.length >= 2) {
-  colSetup(cols[0], 'up');
-  colSetup(cols[1], 'down');
+  // Phones: single column drifting up. Tablet/desktop: two counter-scrolling columns.
+  const isPhone = window.matchMedia('(max-width: 767px)').matches;
+  if (isPhone) {
+    colSetup(cols[0], 'up');
+    cols[1].style.display = 'none';
+  } else {
+    colSetup(cols[0], 'up');
+    colSetup(cols[1], 'down');
+  }
   document.querySelectorAll('.features-marquee').forEach((m) => { m.style.overflow = 'hidden'; });
 }
 
@@ -176,9 +194,11 @@ if (pnlsTrack) {
     pnlsTrack.appendChild(clone);
   });
 
-  // Calculate total width of original panels
+  // Calculate total width of original panels (track uses a 10px flex gap, so add
+  // one gap per panel — otherwise the loop seam shows a small skip)
+  const GAP = 10;
   const panelWidths = panels.map(el => el.offsetWidth);
-  const totalWidth = panelWidths.reduce((sum, w) => sum + w, 0);
+  const totalWidth = panelWidths.reduce((sum, w) => sum + w, 0) + GAP * panels.length;
 
   // Set track to row flex for horizontal stacking
   pnlsTrack.style.display = "flex";
@@ -211,6 +231,24 @@ gsap.to(".image-8", {
   ],
   repeat: -1
 });
+
+// Mobile menu (burger) — toggles the dropdown, closes on link tap
+const burger = document.querySelector('.burger');
+const options = document.querySelector('.options');
+if (burger && options) {
+  burger.addEventListener('click', () => {
+    const open = options.classList.toggle('is-open');
+    burger.classList.toggle('is-open', open);
+    burger.setAttribute('aria-expanded', String(open));
+  });
+  options.querySelectorAll('a').forEach((a) => {
+    a.addEventListener('click', () => {
+      options.classList.remove('is-open');
+      burger.classList.remove('is-open');
+      burger.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
 
 // Showcase image: subtle parallax float
 gsap.to(".image-showcase", {

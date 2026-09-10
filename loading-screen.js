@@ -15,11 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
   loadingScreen.style.overflow = "hidden";
 
   // Circular gold halo behind the logo (round, so no square edges)
+  const isPhone = window.innerWidth < 768;
   const halo = document.createElement("div");
   halo.className = "loading-halo";
   halo.style.position = "absolute";
-  halo.style.width = "380px";
-  halo.style.height = "380px";
+  halo.style.width = isPhone ? "260px" : "380px";
+  halo.style.height = isPhone ? "260px" : "380px";
   halo.style.borderRadius = "50%";
   halo.style.background = "radial-gradient(circle, rgba(242,193,78,.28) 0%, rgba(214,69,80,.12) 45%, transparent 70%)";
   halo.style.opacity = "0";
@@ -29,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Brand logo zooms in
   const logo = document.createElement("img");
   logo.src = "assets/logo.png";
-  logo.style.width = "220px";
+  logo.style.width = isPhone ? "150px" : "220px";
   logo.style.height = "auto";
   logo.style.transform = "scale(0)";
   logo.style.position = "relative";
